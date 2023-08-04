@@ -80,6 +80,10 @@ func _connected(proto = ""):
 	
 	
 func _on_data(msg):
+	
+	if(msg.find("PING") == 0):
+		ws.send_text("PONG")
+	
 	var data = {}
 	var dataPairs = msg.split(";");
 	for pair in dataPairs:
@@ -97,21 +101,13 @@ func _on_data(msg):
 		data["channel"] = result.get_string(5)
 		data["msg"] = result.get_string(6).strip_edges(false,true);
 	
-	if(data.has("cmd") && data.cmd == "PING" ):
-		_send("PONG")
-	
 	print(data)
 	emit_signal("new_message",data)
 	#Regex regex = new Regex(@"(.*?):(?:(([a-zA-Z0-9_]*?)!([a-zA-Z0-9_]*?)@[a-zA-Z0-9_]*?.tmi.twitch.tv)|tmi.twitch.tv)\s([A-Z]*?)?\s#([^\s]*)\s{0,}:?(.*?)?$", RegexOptions.IgnoreCase);
-
-func _send(msg):
-	ws.get_peer(1).set_write_mode(WebSocketPeer.WRITE_MODE_TEXT)
-	ws.get_peer(1).put_packet(msg.to_utf8())
 	
 func _closed(was_clean = false):
 	print("Closed, clean: ", was_clean)
 	_ws_connect()
-	#set_process(false)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
