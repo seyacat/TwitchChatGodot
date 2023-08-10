@@ -55,7 +55,6 @@ func _ws_connect():
 	
 	#var err = ws.connect_to_url("ws://irc-ws.chat.twitch.tv:80");
 	
-	print("err=",err)
 	if err != 0:
 		print("Unable to connect")
 		set_process(false)
@@ -101,7 +100,6 @@ func _on_data(msg):
 		data["channel"] = result.get_string(5)
 		data["msg"] = result.get_string(6).strip_edges(false,true);
 	
-	print(data)
 	emit_signal("new_message",data)
 	#Regex regex = new Regex(@"(.*?):(?:(([a-zA-Z0-9_]*?)!([a-zA-Z0-9_]*?)@[a-zA-Z0-9_]*?.tmi.twitch.tv)|tmi.twitch.tv)\s([A-Z]*?)?\s#([^\s]*)\s{0,}:?(.*?)?$", RegexOptions.IgnoreCase);
 	
@@ -146,11 +144,8 @@ func _processCredentials(result, response_code, headers, body):
 #TODO: ADD TIMER RETRIEVE ACCESS TOKEN
 func _notification(what):
 	if what == NOTIFICATION_APPLICATION_FOCUS_IN:
-		print("NOTIFICATION_APPLICATION_FOCUS_IN")
 		_requestCredentials()
-	if what == NOTIFICATION_APPLICATION_FOCUS_OUT :
-		print("NOTIFICATION_APPLICATION_FOCUS_OUT")
-	pass
+	
 			
 # Note: This can be called from anywhere inside the tree.  This function is path independent.
 # Go through everything in the persist category and ask them to return a dict of relevant variables
@@ -162,7 +157,6 @@ func _save_session():
 func _load_session():
 	
 	if FileAccess.file_exists("user://session.dat"):
-		print("file found")
 		var file = FileAccess.open("user://session.dat", FileAccess.READ)
 		var content = file.get_line()
 		var temp_auth = JSON.parse_string(content)
@@ -183,10 +177,8 @@ func _ban(data,duration,reason="no reason"):
 		HTTPClient.METHOD_POST, json)
 		
 func _vip(data):
-	print("VIIIIIP")
 	if !auth || !data.has("room-id") || !data.has("user-id"):
 		return
-	print("https://api.twitch.tv/helix/channels/vips?broadcaster_id="+str(data["room-id"])+"&user_id="+str(data["user-id"]))
 	var headers = [
 		'Client-Id: '+client_id, 
 		'Authorization: Bearer '+auth.accessToken]
@@ -196,7 +188,6 @@ func _vip(data):
 		headers,true,
 		HTTPClient.METHOD_POST)
 func _unvip(data):
-	print("UNVIP")
 	if !auth || !data.has("room-id") || !data.has("user-id"):
 		return
 	var headers = [ 
