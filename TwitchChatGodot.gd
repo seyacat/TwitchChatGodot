@@ -71,12 +71,10 @@ func _connected(proto = ""):
 		ws.send_text(("NICK "+auth.twitchUser.login))
 		ws.send_text(("JOIN #"+auth.twitchUser.login))
 	else:
-		var anonimousChannel = $"../Game/Panel2/VBoxContainer/HBoxContainer6/anonimousChannel".text
-		ws.get_peer(1).put_packet("NICK justinfan12345".to_utf8_buffer())
-		ws.get_peer(1).put_packet("PASS kappa".to_utf8_buffer())
-		ws.get_peer(1).put_packet(("JOIN #"+anonimousChannel).to_utf8())
-	
-	
+		var anonimousChannel = 'seyacat'
+		ws.send_text("NICK justinfan12345")
+		ws.send_text("PASS kappa")
+		ws.send_text("JOIN #"+anonimousChannel)
 	
 func _on_data(msg):
 	
@@ -108,7 +106,7 @@ func _closed(was_clean = false):
 	_ws_connect()
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
+func _process(_delta):
 	ws.poll()
 	var state = ws.get_ready_state()
 	
@@ -134,7 +132,7 @@ func _requestCredentials():
 		$HTTPRequest.connect("request_completed", _processCredentials)
 		$HTTPRequest.request("https://oauth-dev.seyacat.com/twitch/tempid?temp_id="+temp_id)
 		
-func _processCredentials(result, response_code, headers, body):
+func _processCredentials(_result, _response_code, _headers, body):
 	var json = JSON.parse_string(body.get_string_from_utf8())
 	if(json):
 		auth = json
@@ -205,7 +203,7 @@ func _newTemporalHttpRequest():
 	add_child(httr)
 	return httr
 	
-func _delTemporalHttpRequest(result, response_code, headers, body, httr):
+func _delTemporalHttpRequest(_result, _response_code, _headers, _body, httr):
 	httr.queue_free()
 	
 	
