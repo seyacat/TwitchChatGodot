@@ -3,12 +3,15 @@ extends Node
 # oauth-dev.seyacat.com client_id integration
 var client_id = "qhndxilvmmnsb8xq5jfmbvqk544opx"
 var ws = WebSocketPeer.new() 
-var connected = false;
+var is_connected = false;
 signal new_message(data);
+signal channel_loaded(channel);
+signal connected;
 var temp_id
 var auth
 var auth_connected = false
-var anonimous_connected = false
+var annonimous_connected = false
+var annonimousChannel = ""
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -18,15 +21,19 @@ func _ready():
 	_timer.set_wait_time(1.0)
 	_timer.set_one_shot(false) # Make sure it loops
 	_timer.start()
-	
+	_load_channel()
 	_load_session()
 	if(auth):
 		_ws_connect()
 		pass
+	else:
+		if(annonimousChannel != ''):
+			_anon_connection()
 
 func _tic(): 
+	
 	if auth:
-		anonimous_connected = false
+		annonimous_connected = false
 		if ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
 			auth_connected = true
 		else:
@@ -34,9 +41,14 @@ func _tic():
 	else:
 		auth_connected = false
 		if ws.get_ready_state() ==  WebSocketPeer.STATE_OPEN:
-			anonimous_connected = true
+			annonimous_connected = true
 		else:
-			anonimous_connected = false
+			annonimous_connected = false
+			
+func setAnnonimousChannel(txt):
+	annonimousChannel = txt
+	_save_channel()
+			
 func _authenticate():
 	auth = null
 	temp_id =  str(RandomNumberGenerator.new().randf_range(0,100))+str(RandomNumberGenerator.new().randf_range(0,100));
@@ -45,6 +57,12 @@ func _authenticate():
 func _anon_connection():
 	auth = null
 	_ws_connect()
+	
+func _disconnect():
+	auth = null
+	_delete_session()
+	ws.close()
+	set_process(true)
 
 func _ws_connect():
 	set_process(true)
@@ -62,7 +80,8 @@ func _ws_connect():
 
 func _connected(proto = ""):
 	print("Connected with protocol: ", proto)
-	connected = true;
+	is_connected = true;
+	emit_signal('connected')
 	#await get_tree().create_timer(1000).timeout
 	
 	ws.send_text("CAP REQ :twitch.tv/membership twitch.tv/tags twitch.tv/commands")
@@ -72,10 +91,9 @@ func _connected(proto = ""):
 		ws.send_text(("NICK "+auth.twitchUser.login))
 		ws.send_text(("JOIN #"+auth.twitchUser.login))
 	else:
-		var anonimousChannel = 'seyacat'
 		ws.send_text("NICK justinfan12345")
 		ws.send_text("PASS kappa")
-		ws.send_text("JOIN #"+anonimousChannel)
+		ws.send_text("JOIN #"+annonimousChannel)
 	
 func _on_data(msg):
 	
@@ -112,9 +130,9 @@ func _process(_delta):
 	var state = ws.get_ready_state()
 
 	if state == WebSocketPeer.STATE_OPEN:
-		if !connected:
+		if !is_connected:
 			print(state == WebSocketPeer.STATE_OPEN)
-			connected = true
+			is_connected = true
 			_connected()
 		while ws.get_available_packet_count():
 			_on_data( ws.get_packet().get_string_from_utf8() )
@@ -122,6 +140,7 @@ func _process(_delta):
 		# Keep polling to achieve proper close.
 		pass
 	elif state == WebSocketPeer.STATE_CLOSED:
+		is_connected = false
 		var code = ws.get_close_code()
 		var reason = ws.get_close_reason()
 		print("WebSocket closed with code: %d, reason %s. Clean: %s" % [code, reason, code != -1])
@@ -146,21 +165,36 @@ func _notification(what):
 		_requestCredentials()
 	
 			
-# Note: This can be called from anywhere inside the tree.  This function is path independent.
-# Go through everything in the persist category and ask them to return a dict of relevant variables
+func _delete_session():
+	if FileAccess.file_exists("user://session.dat"):
+		DirAccess.remove_absolute("user://session.dat")
+	
 func _save_session():
 	var file = FileAccess.open("user://session.dat", FileAccess.WRITE)
-	file.store_line(JSON.stringify(auth))
-	
+	if(auth):
+		file.store_line(JSON.stringify(auth))
 	
 func _load_session():
-	
 	if FileAccess.file_exists("user://session.dat"):
 		var file = FileAccess.open("user://session.dat", FileAccess.READ)
 		var content = file.get_line()
 		var temp_auth = JSON.parse_string(content)
 		if(temp_auth):
 			auth = temp_auth
+
+func _save_channel():
+	print("save channel")
+	var file = FileAccess.open("user://channel.dat", FileAccess.WRITE)
+	file.store_line(annonimousChannel)
+
+func _load_channel():
+	if FileAccess.file_exists("user://channel.dat"):
+		
+		var file = FileAccess.open("user://channel.dat", FileAccess.READ)
+		annonimousChannel = file.get_line()	
+		print("load channel")
+		print(annonimousChannel)
+		channel_loaded.emit(annonimousChannel);
 		
 func _ban(data,duration,reason="no reason"):
 	if !auth || !data.has("room-id") || !data.has("user-id"):
