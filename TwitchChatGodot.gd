@@ -47,6 +47,7 @@ func _anon_connection():
 	_ws_connect()
 
 func _ws_connect():
+	set_process(true)
 	#ws = WebSocketPeer.new()
 	#ws.connect("data_received", _on_data)
 	#ws.connect("connection_established" ,_connected)
@@ -109,7 +110,7 @@ func _closed(was_clean = false):
 func _process(_delta):
 	ws.poll()
 	var state = ws.get_ready_state()
-	
+
 	if state == WebSocketPeer.STATE_OPEN:
 		if !connected:
 			print(state == WebSocketPeer.STATE_OPEN)
@@ -171,7 +172,7 @@ func _ban(data,duration,reason="no reason"):
 	var httr = _newTemporalHttpRequest()
 	httr.request(
 		"https://api.twitch.tv/helix/moderation/bans?broadcaster_id="+str(data["room-id"])+"&moderator_id="+str(auth.twitchUser.id),
-		headers,true,
+		headers,
 		HTTPClient.METHOD_POST, json)
 		
 func _vip(data):
@@ -183,7 +184,7 @@ func _vip(data):
 	var httr = _newTemporalHttpRequest()
 	httr.request(
 		"https://api.twitch.tv/helix/channels/vips?broadcaster_id="+str(data["room-id"])+"&user_id="+str(data["user-id"]),
-		headers,true,
+		headers,
 		HTTPClient.METHOD_POST)
 func _unvip(data):
 	if !auth || !data.has("room-id") || !data.has("user-id"):
@@ -194,7 +195,7 @@ func _unvip(data):
 	var httr = _newTemporalHttpRequest()
 	httr.request(
 		"https://api.twitch.tv/helix/channels/vips?broadcaster_id="+str(data["room-id"])+"&user_id="+str(data["user-id"]),
-		headers,true,
+		headers,
 		HTTPClient.METHOD_DELETE)
 
 func _newTemporalHttpRequest():
