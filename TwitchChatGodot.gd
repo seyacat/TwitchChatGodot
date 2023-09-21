@@ -52,7 +52,7 @@ func setAnnonimousChannel(txt):
 func _authenticate():
 	auth = null
 	temp_id =  str(RandomNumberGenerator.new().randf_range(0,100))+str(RandomNumberGenerator.new().randf_range(0,100));
-	OS.shell_open("https://oauth-dev.seyacat.com/twitch/login?&scope=user:read:email+channel:manage:vips+moderator:manage:banned_users+chat:read&temp_id="+temp_id);
+	OS.shell_open("https://oauth-dev.seyacat.com/twitch/login?&scope=user:read:email+channel:manage:vips+moderator:manage:banned_users+chat:read+whispers:read&temp_id="+temp_id);
 
 func _anon_connection():
 	auth = null
@@ -86,7 +86,6 @@ func _connected(proto = ""):
 	
 	ws.send_text("CAP REQ :twitch.tv/membership twitch.tv/tags twitch.tv/commands")
 	if auth && auth.has("accessToken"):
-		print(auth.twitchUser.login)
 		ws.send_text(("PASS oauth:" + auth.accessToken))
 		ws.send_text(("NICK "+auth.twitchUser.login))
 		ws.send_text(("JOIN #"+auth.twitchUser.login))
@@ -109,7 +108,7 @@ func _on_data(msg):
 	
 	
 	var regex = RegEx.new()
-	regex.compile("(?:(([a-zA-Z0-9_]*?)!([a-zA-Z0-9_]*?)@[a-zA-Z0-9_]*?.tmi.twitch.tv)|tmi.twitch.tv)\\s([A-Z]*?)?\\s#([^\\s]*)\\s{0,}:?(.*?)?$")
+	regex.compile("(?:(([a-zA-Z0-9_]*?)!([a-zA-Z0-9_]*?)@[a-zA-Z0-9_]*?.tmi.twitch.tv)|tmi.twitch.tv)\\s([A-Z]*?)?\\s#?([^\\s]*)\\s{0,}:?(.*?)?$")
 	var result = regex.search(msg)
 	if result:
 		data["username"] = result.get_string(2)
