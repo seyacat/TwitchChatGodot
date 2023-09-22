@@ -98,7 +98,7 @@ func _on_data(msg):
 	
 	if(msg.find("PING") == 0):
 		ws.send_text("PONG")
-	
+		
 	var data = {}
 	var dataPairs = msg.split(";");
 	for pair in dataPairs:
@@ -115,6 +115,9 @@ func _on_data(msg):
 		data["cmd"] = result.get_string(4)
 		data["channel"] = result.get_string(5)
 		data["msg"] = result.get_string(6).strip_edges(false,true);
+		
+	if data.has("cmd") && data["cmd"] == "RECONNECT":
+		_ws_connect()
 	
 	emit_signal("new_message",data)
 	#Regex regex = new Regex(@"(.*?):(?:(([a-zA-Z0-9_]*?)!([a-zA-Z0-9_]*?)@[a-zA-Z0-9_]*?.tmi.twitch.tv)|tmi.twitch.tv)\s([A-Z]*?)?\s#([^\s]*)\s{0,}:?(.*?)?$", RegexOptions.IgnoreCase);
