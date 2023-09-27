@@ -12,9 +12,11 @@ var auth
 var auth_connected = false
 var annonimous_connected = false
 var annonimousChannel = ""
+var regex
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	regex = RegEx.new()	
 	var _timer = Timer.new()
 	add_child(_timer)
 	_timer.connect("timeout", _tic)
@@ -106,10 +108,9 @@ func _on_data(msg):
 		if d.size() == 2:
 			data[d[0]]=d[1]
 	
-	
-	var regex = RegEx.new()
 	regex.compile("(?:(([a-zA-Z0-9_]*?)!([a-zA-Z0-9_]*?)@[a-zA-Z0-9_]*?.tmi.twitch.tv)|tmi.twitch.tv)\\s([A-Z]*?)?\\s#?([^\\s]*)\\s{0,}:?(.*?)?$")
 	var result = regex.search(msg)
+	regex.clear();
 	if result:
 		data["username"] = result.get_string(2)
 		data["cmd"] = result.get_string(4)
@@ -120,7 +121,6 @@ func _on_data(msg):
 		_ws_connect()
 	
 	emit_signal("new_message",data)
-	#Regex regex = new Regex(@"(.*?):(?:(([a-zA-Z0-9_]*?)!([a-zA-Z0-9_]*?)@[a-zA-Z0-9_]*?.tmi.twitch.tv)|tmi.twitch.tv)\s([A-Z]*?)?\s#([^\s]*)\s{0,}:?(.*?)?$", RegexOptions.IgnoreCase);
 	
 func _closed(was_clean = false):
 	print("Closed, clean: ", was_clean)
